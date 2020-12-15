@@ -1,24 +1,24 @@
 package com.atlas.dis.rest.builder;
 
 import builder.AttributeResultBuilder;
-import builder.RecordBuilder;
+import com.app.common.builder.RecordBuilder;
 import com.atlas.dis.rest.attribute.MonsterDropAttributes;
 
 public class MonsterDropAttributesBuilder extends RecordBuilder<MonsterDropAttributes, MonsterDropAttributesBuilder> implements AttributeResultBuilder {
-   private static final String MONSTER_ID = "MONSTER_ID";
+   private Integer monsterId;
 
-   private static final String ITEM_ID = "ITEM_ID";
+   private Integer itemId;
 
-   private static final String MAXIMUM_QUANTITY = "MAXIMUM_QUANTITY";
+   private Integer maximumQuantity;
 
-   private static final String MINIMUM_QUANTITY = "MINIMUM_QUANTITY";
+   private Integer minimumQuantity;
 
-   private static final String CHANCE = "CHANCE";
+   private Integer chance;
 
 
    @Override
    public MonsterDropAttributes construct() {
-      return new MonsterDropAttributes(get(MONSTER_ID), get(ITEM_ID), get(MAXIMUM_QUANTITY), get(MINIMUM_QUANTITY), get(CHANCE));
+      return new MonsterDropAttributes(monsterId, itemId, maximumQuantity, minimumQuantity, chance);
    }
 
    @Override
@@ -27,23 +27,27 @@ public class MonsterDropAttributesBuilder extends RecordBuilder<MonsterDropAttri
    }
 
    public MonsterDropAttributesBuilder setMonsterId(Integer monsterId) {
-      return set(MONSTER_ID, monsterId);
+      this.monsterId = monsterId;
+      return getThis();
    }
 
    public MonsterDropAttributesBuilder setItemId(Integer itemId) {
-      return set(ITEM_ID, itemId);
+      this.itemId = itemId;
+      return getThis();
    }
 
    public MonsterDropAttributesBuilder setMaximumQuantity(Integer maximumQuantity) {
-      return set(MAXIMUM_QUANTITY, maximumQuantity);
+      this.maximumQuantity = maximumQuantity;
+      return getThis();
    }
 
    public MonsterDropAttributesBuilder setMinimumQuantity(Integer minimumQuantity) {
-      return set(MINIMUM_QUANTITY, minimumQuantity);
+      this.minimumQuantity = minimumQuantity;
+      return getThis();
    }
 
    public MonsterDropAttributesBuilder setChance(Integer chance) {
-      return set(CHANCE, chance);
+      this.chance = chance;
+      return getThis();
    }
-
 }

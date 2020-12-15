@@ -6,7 +6,6 @@ import com.atlas.dis.processor.MonsterDropProcessor;
 import com.atlas.shared.rest.RestServerFactory;
 import com.atlas.shared.rest.RestService;
 import com.atlas.shared.rest.UriBuilder;
-import org.glassfish.grizzly.http.server.HttpServer;
 
 import database.PersistenceManager;
 

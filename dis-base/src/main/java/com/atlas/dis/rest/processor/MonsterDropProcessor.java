@@ -4,8 +4,6 @@ import builder.ResultBuilder;
 import com.app.rest.util.stream.Collectors;
 import com.atlas.dis.rest.ResultObjectFactory;
 
-import javax.ws.rs.core.Response;
-
 public final class MonsterDropProcessor {
    private MonsterDropProcessor() {
    }
