@@ -15,7 +15,7 @@ COPY dis-model/src dis-model/src
 COPY dis-base/src dis-base/src
 COPY dis-database/src dis-database/src
 
-RUN mvn install
+RUN mvn install -Prunnable
 
 FROM openjdk:14-ea-jdk-alpine
 USER root
