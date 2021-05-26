@@ -1,50 +1,34 @@
 package main
 
 import (
+	"atlas-dis/database"
 	"atlas-dis/database/monster_drop"
 	"atlas-dis/domain"
+	"atlas-dis/logger"
 	"atlas-dis/rest"
 	json2 "atlas-dis/rest/json"
-	"atlas-dis/retry"
 	"bufio"
 	"bytes"
-	"gorm.io/driver/mysql"
+	"context"
+	"github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 )
 import "gorm.io/gorm"
 
-func connectToDatabase(attempt int) (bool, interface{}, error) {
-	db, err := gorm.Open(mysql.New(mysql.Config{
-		DSN:                       "root:the@tcp(atlas-db:3306)/atlas-dis?charset=utf8&parseTime=True&loc=Local",
-		DefaultStringSize:         256,
-		DisableDatetimePrecision:  true,
-		DontSupportRenameIndex:    true,
-		DontSupportRenameColumn:   true,
-		SkipInitializeWithVersion: false,
-	}), &gorm.Config{})
-	if err != nil {
-		return true, nil, err
-	}
-	return false, db, err
-}
-
 func main() {
-	l := log.New(os.Stdout, "dis ", log.LstdFlags|log.Lmicroseconds)
+	l := logger.CreateLogger()
+	l.Infoln("Starting main service.")
 
-	r, err := retry.RetryResponse(connectToDatabase, 10)
-	if err != nil {
-		panic("failed to connect database")
-	}
-	db := r.(*gorm.DB)
+	wg := &sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
 
-	// Migrate the schema
-	monster_drop.Migration(db)
+	db := database.ConnectToDatabase(l)
 
-	createRestService(l, db)
+	rest.CreateRestService(l, db, ctx, wg)
 
 	initializeDrops(l, db)
 
@@ -54,10 +38,13 @@ func main() {
 
 	// Block until a signal is received.
 	sig := <-c
-	l.Println("[INFO] shutting down via signal:", sig)
+	l.Infof("Initiating shutdown with signal %s.", sig)
+	cancel()
+	wg.Wait()
+	l.Infoln("Service shutdown.")
 }
 
-func initializeDrops(l *log.Logger, db *gorm.DB) {
+func initializeDrops(l logrus.FieldLogger, db *gorm.DB) {
 	s, err := monster_drop.GetAllMonsterDrops(db)
 	if err != nil {
 		l.Fatalf(err.Error())
@@ -68,7 +55,8 @@ func initializeDrops(l *log.Logger, db *gorm.DB) {
 
 	jsonFile, err := os.Open("./drop_data.json")
 	if err != nil {
-		l.Fatalf(err.Error())
+		l.WithError(err).Errorf("Unable to open drop data file.")
+		return
 	}
 	defer jsonFile.Close()
 
@@ -122,9 +110,4 @@ func initializeDrops(l *log.Logger, db *gorm.DB) {
 	if err != nil {
 		l.Fatalf(err.Error())
 	}
-}
-
-func createRestService(l *log.Logger, db *gorm.DB) {
-	rs := rest.NewServer(l, db)
-	go rs.Run()
 }

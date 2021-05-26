@@ -5,8 +5,8 @@ import (
 	"atlas-dis/domain"
 	"atlas-dis/rest/json"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -16,7 +16,7 @@ type GenericError struct {
 	Message string `json:"message"`
 }
 
-func GetMonsterDrops(_ *log.Logger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
+func GetMonsterDrops(_ logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
