@@ -2,8 +2,8 @@ package monster_drop
 
 import "gorm.io/gorm"
 
-func Migration(db *gorm.DB) {
-	_ = db.AutoMigrate(&monsterDrop{})
+func Migration(db *gorm.DB) error {
+	return db.AutoMigrate(&monsterDrop{})
 }
 
 type monsterDrop struct {

@@ -26,7 +26,7 @@ func main() {
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	db := database.ConnectToDatabase(l)
+	db := database.Connect(l, database.SetMigrations(monster_drop.Migration))
 
 	rest.CreateRestService(l, db, ctx, wg)
 
