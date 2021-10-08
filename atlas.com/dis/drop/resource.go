@@ -1,15 +1,18 @@
-package monster_drop
+package drop
 
 import (
-	"atlas-dis/database/monster_drop"
-	"atlas-dis/domain"
-	"atlas-dis/rest/json"
+	"atlas-dis/json"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
+
+func InitResource(router *mux.Router, l logrus.FieldLogger, db *gorm.DB) {
+	eRouter := router.PathPrefix("/monsters").Subrouter()
+	eRouter.HandleFunc("/drops", GetMonsterDrops(l, db)).Queries("monsterId", "{monsterId}").Methods(http.MethodGet)
+}
 
 // GenericError is a generic error message returned by a server
 type GenericError struct {
@@ -20,7 +23,7 @@ func GetMonsterDrops(_ logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter
 	return func(rw http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		var monsterDrops []domain.MonsterDrop
+		var monsterDrops []Model
 		if val, ok := vars["monsterId"]; ok {
 			monsterId, err := strconv.ParseUint(val, 10, 32)
 			if err != nil {
@@ -29,7 +32,7 @@ func GetMonsterDrops(_ logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter
 				return
 			}
 
-			monsterDrops, err = monster_drop.GetDropsByMonsterId(db, uint32(monsterId))
+			monsterDrops, err = GetDropsByMonsterId(db, uint32(monsterId))
 			if err != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
 				json.ToJSON(&GenericError{Message: err.Error()}, rw)
@@ -37,7 +40,7 @@ func GetMonsterDrops(_ logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter
 			}
 		} else {
 			var err2 error
-			monsterDrops, err2 = monster_drop.GetAllMonsterDrops(db)
+			monsterDrops, err2 = GetAllMonsterDrops(db)
 			if err2 != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
 				json.ToJSON(&GenericError{Message: err2.Error()}, rw)
@@ -45,12 +48,12 @@ func GetMonsterDrops(_ logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter
 			}
 		}
 
-		var resultData []MonsterDropData
+		var resultData []DataBody
 		for _, md := range monsterDrops {
-			result := MonsterDropData{
+			result := DataBody{
 				Id:   strconv.Itoa(int(md.Id())),
 				Type: "com.atlas.dis.rest.attribute.MonsterDropAttributes",
-				Attributes: MonsterDropAttributes{
+				Attributes: Attributes{
 					MonsterId:       md.MonsterId(),
 					ItemId:          md.ItemId(),
 					MaximumQuantity: md.MaximumQuantity(),
@@ -62,6 +65,6 @@ func GetMonsterDrops(_ logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter
 		}
 
 		rw.WriteHeader(http.StatusOK)
-		json.ToJSON(MonsterDropListDataContainer{Data: resultData}, rw)
+		json.ToJSON(DataListContainer{Data: resultData}, rw)
 	}
 }

@@ -1,11 +1,10 @@
-package monster_drop
+package drop
 
 import (
-	"atlas-dis/domain"
 	"gorm.io/gorm"
 )
 
-func BulkCreateMonsterDrop(db *gorm.DB, monsterDrops []domain.MonsterDrop) error {
+func BulkCreateMonsterDrop(db *gorm.DB, monsterDrops []Model) error {
 	//db.Begin()
 	for _, md := range monsterDrops {
 		m := &monsterDrop{

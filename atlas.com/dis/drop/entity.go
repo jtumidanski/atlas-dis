@@ -1,4 +1,4 @@
-package monster_drop
+package drop
 
 import "gorm.io/gorm"
 

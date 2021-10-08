@@ -2,11 +2,11 @@ package main
 
 import (
 	"atlas-dis/database"
-	"atlas-dis/database/monster_drop"
-	"atlas-dis/domain"
+	"atlas-dis/drop"
+	json2 "atlas-dis/json"
 	"atlas-dis/logger"
 	"atlas-dis/rest"
-	json2 "atlas-dis/rest/json"
+	"atlas-dis/tracing"
 	"bufio"
 	"bytes"
 	"context"
@@ -19,6 +19,8 @@ import (
 )
 import "gorm.io/gorm"
 
+const serviceName = "atlas-dis"
+
 func main() {
 	l := logger.CreateLogger()
 	l.Infoln("Starting main service.")
@@ -26,9 +28,20 @@ func main() {
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	db := database.Connect(l, database.SetMigrations(monster_drop.Migration))
+	tc, err := tracing.InitTracer(l)(serviceName)
+	if err != nil {
+		l.WithError(err).Fatal("Unable to initialize tracer.")
+	}
+	defer func(tc io.Closer) {
+		err := tc.Close()
+		if err != nil {
+			l.WithError(err).Errorf("Unable to close tracer.")
+		}
+	}(tc)
 
-	rest.CreateRestService(l, db, ctx, wg)
+	db := database.Connect(l, database.SetMigrations(drop.Migration))
+
+	rest.CreateService(l, db, ctx, wg, "/ms/dis", drop.InitResource)
 
 	initializeDrops(l, db)
 
@@ -45,7 +58,7 @@ func main() {
 }
 
 func initializeDrops(l logrus.FieldLogger, db *gorm.DB) {
-	s, err := monster_drop.GetAllMonsterDrops(db)
+	s, err := drop.GetAllMonsterDrops(db)
 	if err != nil {
 		l.Fatalf(err.Error())
 	}
@@ -68,7 +81,7 @@ func initializeDrops(l logrus.FieldLogger, db *gorm.DB) {
 		Chance          uint32 `json:"chance"`
 	}{}
 
-	var monsterDrops []domain.MonsterDrop
+	var monsterDrops []drop.Model
 	reader := bufio.NewReader(jsonFile)
 	for {
 		var buffer bytes.Buffer
@@ -92,7 +105,7 @@ func initializeDrops(l logrus.FieldLogger, db *gorm.DB) {
 		lineObject := &input
 		json2.FromJSON(lineObject, &buffer)
 
-		md := domain.NewMonsterDropBuilder(0).
+		md := drop.NewMonsterDropBuilder(0).
 			SetMonsterId(lineObject.MonsterId).
 			SetItemId(lineObject.ItemId).
 			SetMinimumQuantity(lineObject.MinimumQuantity).
@@ -106,7 +119,7 @@ func initializeDrops(l logrus.FieldLogger, db *gorm.DB) {
 		}
 	}
 
-	err = monster_drop.BulkCreateMonsterDrop(db, monsterDrops)
+	err = drop.BulkCreateMonsterDrop(db, monsterDrops)
 	if err != nil {
 		l.Fatalf(err.Error())
 	}
