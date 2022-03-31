@@ -1,38 +1,29 @@
 package drop
 
 import (
+	"atlas-dis/database"
+	"atlas-dis/model"
 	"gorm.io/gorm"
 )
 
-func GetAllMonsterDrops(db *gorm.DB) ([]Model, error) {
-	var results []monsterDrop
-	err := db.Find(&results).Error
-	if err != nil {
-		return nil, err
+func getAll() database.EntitySliceProvider[entity] {
+	return func(db *gorm.DB) model.SliceProvider[entity] {
+		var results []entity
+		err := db.Find(&results).Error
+		if err != nil {
+			return model.ErrorSliceProvider[entity](err)
+		}
+		return model.FixedSliceProvider(results)
 	}
-
-	var monsterDrops []Model
-	for _, r := range results {
-		monsterDrops = append(monsterDrops, makeDrop(&r))
-	}
-	return monsterDrops, nil
 }
 
-func GetDropsByMonsterId(db *gorm.DB, monsterId uint32) ([]Model, error) {
-	var results []monsterDrop
-	err := db.Where(&monsterDrop{MonsterId: monsterId}).Find(&results).Error
-	if err != nil {
-		return nil, err
+func getByMonsterId(monsterId uint32) database.EntitySliceProvider[entity] {
+	return func(db *gorm.DB) model.SliceProvider[entity] {
+		return database.SliceQuery[entity](db, &entity{MonsterId: monsterId})
 	}
-
-	var monsterDrops []Model
-	for _, r := range results {
-		monsterDrops = append(monsterDrops, makeDrop(&r))
-	}
-	return monsterDrops, nil
 }
 
-func makeDrop(m *monsterDrop) Model {
+func makeDrop(m entity) (Model, error) {
 	r := NewMonsterDropBuilder(m.ID).
 		SetMonsterId(m.MonsterId).
 		SetItemId(m.ItemId).
@@ -40,5 +31,5 @@ func makeDrop(m *monsterDrop) Model {
 		SetMaximumQuantity(m.MaximumQuantity).
 		SetChance(m.Chance).
 		Build()
-	return r
+	return r, nil
 }

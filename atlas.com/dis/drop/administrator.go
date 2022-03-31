@@ -7,7 +7,7 @@ import (
 func BulkCreateMonsterDrop(db *gorm.DB, monsterDrops []Model) error {
 	//db.Begin()
 	for _, md := range monsterDrops {
-		m := &monsterDrop{
+		m := &entity{
 			MonsterId:       md.MonsterId(),
 			ItemId:          md.ItemId(),
 			MinimumQuantity: md.MinimumQuantity(),

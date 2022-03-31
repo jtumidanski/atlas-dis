@@ -58,7 +58,7 @@ func main() {
 }
 
 func initializeDrops(l logrus.FieldLogger, db *gorm.DB) {
-	s, err := drop.GetAllMonsterDrops(db)
+	s, err := drop.GetAll(l, db)
 	if err != nil {
 		l.Fatalf(err.Error())
 	}

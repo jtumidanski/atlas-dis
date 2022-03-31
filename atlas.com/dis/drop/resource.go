@@ -31,7 +31,7 @@ type GenericError struct {
 	Message string `json:"message"`
 }
 
-func handleMonsterDrops(_ logrus.FieldLogger, db *gorm.DB) func(span opentracing.Span) http.HandlerFunc {
+func handleMonsterDrops(l logrus.FieldLogger, db *gorm.DB) func(span opentracing.Span) http.HandlerFunc {
 	return func(span opentracing.Span) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
@@ -45,7 +45,7 @@ func handleMonsterDrops(_ logrus.FieldLogger, db *gorm.DB) func(span opentracing
 					return
 				}
 
-				monsterDrops, err = GetDropsByMonsterId(db, uint32(monsterId))
+				monsterDrops, err = GetForMonster(l, db)(uint32(monsterId))
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					json.ToJSON(&GenericError{Message: err.Error()}, w)
@@ -53,7 +53,7 @@ func handleMonsterDrops(_ logrus.FieldLogger, db *gorm.DB) func(span opentracing
 				}
 			} else {
 				var err2 error
-				monsterDrops, err2 = GetAllMonsterDrops(db)
+				monsterDrops, err2 = GetAll(l, db)
 				if err2 != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					json.ToJSON(&GenericError{Message: err2.Error()}, w)
